@@ -39,13 +39,17 @@ const CONFIG = {
   ],
 
   // Мінімальний бюджет у гривнях. 0 = без обмеження.
-  minBudgetUAH: 0,
+  minBudgetUAH: 500,
 
   // Пропускати проєкти без вказаного бюджету?
   includeNoBudget: true,
 
   // Скільки повідомлень максимум за один запуск (захист від флуду).
   maxPerRun: 8,
+
+  // Відкидати проєкти, де вже забагато ставок — шанс виграти малий.
+  // 0 = вимкнено. Постав 15, якщо стрічка стане шумною.
+  maxBids: 0,
 
   // Курс для перерахунку бюджетів у USD -> UAH при перевірці minBudgetUAH.
   usdToUah: 44.5,
@@ -175,15 +179,20 @@ async function apiGet(env, page) {
 // їздять між кореневим об'єктом і attributes — читаємо обережно з обох.
 function normalize(raw) {
   const a = raw.attributes ?? raw;
-  const skills = Array.isArray(a.skills)
-    ? a.skills.map((s) => (typeof s === 'string' ? s : s?.name)).filter(Boolean)
-    : [];
+  const names = (list) =>
+    Array.isArray(list)
+      ? list.map((s) => (typeof s === 'string' ? s : s?.name)).filter(Boolean)
+      : [];
+
+  const skills = names(a.skills);
+  const tags = names(a.tags);
 
   return {
     id: Number(raw.id ?? a.id),
     name: a.name ?? '',
     description: a.description ?? a.description_html ?? '',
     skills,
+    tags,
     budget: a.budget ?? null,
     bidCount: a.bid_count ?? null,
     employer: a.employer?.login ?? a.employer?.first_name ?? null,
@@ -196,12 +205,17 @@ function normalize(raw) {
 }
 
 function matches(p) {
-  const haystack = `${p.name} ${p.description} ${p.skills.join(' ')}`
-    .toLowerCase()
-    .replace(/ё/g, 'е');
+  const haystack =
+    `${p.name} ${p.description} ${p.skills.join(' ')} ${p.tags.join(' ')}`
+      .toLowerCase()
+      .replace(/ё/g, 'е');
 
   if (CONFIG.exclude.some((s) => haystack.includes(s))) return false;
   if (!CONFIG.stems.some((s) => haystack.includes(s))) return false;
+
+  if (CONFIG.maxBids > 0 && p.bidCount !== null && p.bidCount > CONFIG.maxBids) {
+    return false;
+  }
 
   const uah = budgetInUah(p.budget);
   if (uah === null) return CONFIG.includeNoBudget;

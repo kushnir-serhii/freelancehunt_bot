@@ -7,16 +7,14 @@ compatibility_date = "2026-08-01"
 crons = ["* * * * *"]
 
 # Стан бота (останній побачений id проєкту).
-# Локально працює як є. Перед деплоєм:
-#   npx wrangler kv namespace create STATE
-# і встав отриманий id замість PUT_YOUR_KV_ID_HERE.
 [[kv_namespaces]]
 binding = "STATE"
-id = "PUT_YOUR_KV_ID_HERE"
+id = "0f3e77665821430f9b3010a3234acddf"
 
 [vars]
 # Ключ для ручних роутів /run, /debug, /reset.
-TRIGGER_KEY = "dev"
+# Воркер має публічний URL — тримай цей ключ у секреті.
+TRIGGER_KEY = "CMig_Hl19S_FnElUGN3UWpWI"
 
 # Секрети (НЕ сюди — вони в .dev.vars локально і в wrangler secret на проді):
 #   FH_TOKEN     — токен Freelancehunt API
