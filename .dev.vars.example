@@ -1,0 +1,11 @@
+# Скопіюй у .dev.vars і заповни. .dev.vars у .gitignore — в репозиторій не потрапить.
+
+# https://freelancehunt.com/my/api2
+FH_TOKEN=
+
+# Токен від @BotFather
+TG_TOKEN=
+
+# Твій chat id: напиши боту будь-що, потім відкрий
+# https://api.telegram.org/bot<TG_TOKEN>/getUpdates і візьми result[0].message.chat.id
+TG_CHAT_ID=

@@ -1,0 +1,24 @@
+name = "freelancehunt-bot"
+main = "src/worker.js"
+compatibility_date = "2026-08-01"
+
+# Кожну хвилину. Якщо впираєшся в rate limit API — постав "*/2 * * * *".
+[triggers]
+crons = ["* * * * *"]
+
+# Стан бота (останній побачений id проєкту).
+# Локально працює як є. Перед деплоєм:
+#   npx wrangler kv namespace create STATE
+# і встав отриманий id замість PUT_YOUR_KV_ID_HERE.
+[[kv_namespaces]]
+binding = "STATE"
+id = "PUT_YOUR_KV_ID_HERE"
+
+[vars]
+# Ключ для ручних роутів /run, /debug, /reset.
+TRIGGER_KEY = "dev"
+
+# Секрети (НЕ сюди — вони в .dev.vars локально і в wrangler secret на проді):
+#   FH_TOKEN     — токен Freelancehunt API
+#   TG_TOKEN     — токен Telegram-бота
+#   TG_CHAT_ID   — твій chat id
