@@ -27,8 +27,24 @@ const CONFIG = {
     'frontend', 'front-end', 'фронтенд',
     'веб-розробк', 'веб-разработ', 'веб розробк',
     'сайт під ключ', 'сайт под ключ',
-    'gsap', 'анімац', 'анимац',
+    'gsap',
     'supabase', 'strapi', 'sanity', 'node.js', 'nodejs',
+  ],
+
+  // Категорії (skills) не з вебу: відео, моушен, 3D, поліграфія.
+  // Проєкт з такою категорією відкидається, якщо в нього немає жодної
+  // веб-категорії з webSkills нижче.
+  blockedSkills: [
+    'анімац', 'анимац', 'моушн', 'моушен', 'motion',
+    'відео', 'видео', 'video', 'аудіо', 'аудио',
+    '3d', 'моделюван', 'моделирован',
+    'поліграф', 'полиграф', 'друк', 'печат',
+  ],
+
+  // Веб-категорії, які «рятують» проєкт від blockedSkills.
+  webSkills: [
+    'веб', 'web', 'сайт', 'верстк', 'html', 'css', 'frontend', 'front-end',
+    'javascript', 'typescript', 'react', 'vue', 'node', 'лендінг', 'лендинг', 'landing',
   ],
 
   // Якщо трапиться хоч один — проєкт відкидається (навіть якщо збігся stem вище).
@@ -212,6 +228,10 @@ function matches(p) {
 
   if (CONFIG.exclude.some((s) => haystack.includes(s))) return false;
   if (!CONFIG.stems.some((s) => haystack.includes(s))) return false;
+
+  const skills = p.skills.map((s) => s.toLowerCase().replace(/ё/g, 'е'));
+  const hasSkill = (list) => skills.some((s) => list.some((w) => s.includes(w)));
+  if (hasSkill(CONFIG.blockedSkills) && !hasSkill(CONFIG.webSkills)) return false;
 
   if (CONFIG.maxBids > 0 && p.bidCount !== null && p.bidCount > CONFIG.maxBids) {
     return false;
