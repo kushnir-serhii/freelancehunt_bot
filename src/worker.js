@@ -22,7 +22,7 @@ const CONFIG = {
     'сайт-візитк', 'сайт-визитк',
     'адаптив',
     'html', 'css', 'tailwind', 'bootstrap',
-    'react', 'next.js', 'nextjs', 'astro', 'vue',
+    'react', 'next.js', 'nextjs', 'astro',
     'javascript', 'typescript',
     'frontend', 'front-end', 'фронтенд',
     'веб-розробк', 'веб-разработ', 'веб розробк',
@@ -31,20 +31,21 @@ const CONFIG = {
     'supabase', 'strapi', 'sanity', 'node.js', 'nodejs',
   ],
 
-  // Категорії (skills) не з вебу: відео, моушен, 3D, поліграфія.
+  // Категорії (skills) не з вебу: відео, моушен, 3D, поліграфія, реклама/маркетинг.
   // Проєкт з такою категорією відкидається, якщо в нього немає жодної
   // веб-категорії з webSkills нижче.
   blockedSkills: [
     'анімац', 'анимац', 'моушн', 'моушен', 'motion',
     'відео', 'видео', 'video', 'аудіо', 'аудио',
     '3d', 'моделюван', 'моделирован',
-    'поліграф', 'полиграф', 'друк', 'печат',
+    'поліграф', 'полиграф', 'друк', 'печать',
+    'реклам', 'маркетинг', 'smm', 'seo', 'просуван', 'продвижен',
   ],
 
   // Веб-категорії, які «рятують» проєкт від blockedSkills.
   webSkills: [
     'веб', 'web', 'сайт', 'верстк', 'html', 'css', 'frontend', 'front-end',
-    'javascript', 'typescript', 'react', 'vue', 'node', 'лендінг', 'лендинг', 'landing',
+    'javascript', 'typescript', 'react', 'react', 'node', 'лендінг', 'лендинг', 'landing',
   ],
 
   // Якщо трапиться хоч один — проєкт відкидається (навіть якщо збігся stem вище).
@@ -67,8 +68,14 @@ const CONFIG = {
   // 0 = вимкнено. Постав 15, якщо стрічка стане шумною.
   maxBids: 0,
 
-  // Курс для перерахунку бюджетів у USD -> UAH при перевірці minBudgetUAH.
+  // Курси для перерахунку бюджетів у UAH при перевірці minBudgetUAH.
   usdToUah: 44.5,
+  eurToUah: 48,
+  plnToUah: 11.3,
+
+  // Пропускати лише проєкти з бюджетом у цих валютах. Проєкти без бюджету
+  // регулює includeNoBudget. [] = будь-яка валюта.
+  allowedCurrencies: ['USD', 'EUR', 'PLN'],
 };
 
 const API = 'https://api.freelancehunt.com/v2/projects';
@@ -211,8 +218,7 @@ function normalize(raw) {
     tags,
     budget: a.budget ?? null,
     bidCount: a.bid_count ?? null,
-    employer: a.employer?.login ?? a.employer?.first_name ?? null,
-    safeType: a.safe_type ?? null,
+    employer: a.employer?.login ?? a.employer?.first_name ?? null,    safeType: a.safe_type ?? null,
     url:
       raw.links?.self?.web ??
       a.links?.self?.web ??
@@ -237,6 +243,14 @@ function matches(p) {
     return false;
   }
 
+  if (
+    p.budget?.amount &&
+    CONFIG.allowedCurrencies.length > 0 &&
+    !CONFIG.allowedCurrencies.includes(p.budget.currency)
+  ) {
+    return false;
+  }
+
   const uah = budgetInUah(p.budget);
   if (uah === null) return CONFIG.includeNoBudget;
   return uah >= CONFIG.minBudgetUAH;
@@ -246,7 +260,10 @@ function budgetInUah(budget) {
   if (!budget?.amount) return null;
   const amount = Number(budget.amount);
   if (!Number.isFinite(amount)) return null;
-  return budget.currency === 'USD' ? amount * CONFIG.usdToUah : amount;
+  if (budget.currency === 'USD') return amount * CONFIG.usdToUah;
+  if (budget.currency === 'EUR') return amount * CONFIG.eurToUah;
+  if (budget.currency === 'PLN') return amount * CONFIG.plnToUah;
+  return amount;
 }
 
 function render(p) {
